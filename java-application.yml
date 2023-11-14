@@ -1,0 +1,32 @@
+resources:
+- name: java-application
+  type: git
+  source:
+    uri: https://github.com/kalyan3439/java-application.git
+    branch: master
+
+jobs:
+- name: build-and-deploy
+  plan:
+  - get: java-application
+    trigger: true
+  - task: build
+    config:
+      platform: linux
+      image_resource:
+        type: registry-image
+        source:
+          repository: kalyan3439/java-application
+      inputs:
+      - name: java-application
+      run:
+        path: /bin/sh
+        args:
+        - -exc
+        - |
+          cd java-application
+          mvn clean package
+          mv target/myweb*.war target/newapp.war
+          docker build -t kalyan3439/myweb .
+          docker push your-docker-image
+          docker run -d -p 8090:8080 --name tomcattest kalyan3439/myweb
